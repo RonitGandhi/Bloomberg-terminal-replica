@@ -1,41 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useBatchQuotes, StockQuote } from '@/hooks/use-market-data'
 import { TrendingUp, TrendingDown, Star, Plus, X, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { usePersistedState } from '@/hooks/use-persisted-state'
 
 const DEFAULT_WATCHLIST = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'JPM', 'V', 'JNJ']
 
 interface WatchlistProps {
   onSelectStock: (symbol: string) => void
   selectedSymbol: string | null
+  focusInputRequest?: number
 }
 
-export function Watchlist({ onSelectStock, selectedSymbol }: WatchlistProps) {
-  const [watchlist, setWatchlist] = useState<string[]>(DEFAULT_WATCHLIST)
+export function Watchlist({ onSelectStock, selectedSymbol, focusInputRequest = 0 }: WatchlistProps) {
+  const { value: watchlist, setValue: setWatchlist } = usePersistedState<string[]>('watchlist', DEFAULT_WATCHLIST)
   const { quotes, isLoading, refresh } = useBatchQuotes(watchlist)
-  
-  // Load watchlist from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('terminal-watchlist')
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setWatchlist(parsed)
-        }
-      } catch {
-        // Use default
-      }
-    }
-  }, [])
-
-  // Save watchlist to localStorage
-  useEffect(() => {
-    localStorage.setItem('terminal-watchlist', JSON.stringify(watchlist))
-  }, [watchlist])
 
   const removeFromWatchlist = (symbol: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -144,14 +126,31 @@ export function Watchlist({ onSelectStock, selectedSymbol }: WatchlistProps) {
       </div>
 
       <div className="px-3 py-2 border-t border-border bg-secondary/30">
-        <AddSymbolInput onAdd={addToWatchlist} existingSymbols={watchlist} />
+        <AddSymbolInput
+          onAdd={addToWatchlist}
+          existingSymbols={watchlist}
+          focusRequest={focusInputRequest}
+        />
       </div>
     </div>
   )
 }
 
-function AddSymbolInput({ onAdd, existingSymbols }: { onAdd: (symbol: string) => void, existingSymbols: string[] }) {
+function AddSymbolInput({
+  onAdd,
+  existingSymbols,
+  focusRequest,
+}: {
+  onAdd: (symbol: string) => void
+  existingSymbols: string[]
+  focusRequest: number
+}) {
   const [input, setInput] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [focusRequest])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -165,6 +164,7 @@ function AddSymbolInput({ onAdd, existingSymbols }: { onAdd: (symbol: string) =>
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-2">
       <input
+        ref={inputRef}
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value.toUpperCase())}

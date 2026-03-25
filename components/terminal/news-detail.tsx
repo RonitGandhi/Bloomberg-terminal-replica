@@ -1,13 +1,21 @@
 'use client'
 
+import { useMemo } from 'react'
 import { NewsItem } from '@/hooks/use-market-data'
 import { Clock, ExternalLink, Share2, Bookmark } from 'lucide-react'
+import { usePersistedState } from '@/hooks/use-persisted-state'
 
 interface NewsDetailProps {
   news: NewsItem
 }
 
 export function NewsDetail({ news }: NewsDetailProps) {
+  const { value: bookmarks, setValue: setBookmarks } = usePersistedState<NewsItem[]>('bookmarked-news', [])
+  const isBookmarked = useMemo(
+    () => bookmarks.some((item) => item.id === news.id),
+    [bookmarks, news.id]
+  )
+
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleString('en-US', {
       month: 'short',
@@ -18,15 +26,31 @@ export function NewsDetail({ news }: NewsDetailProps) {
     })
   }
 
+  const toggleBookmark = () => {
+    setBookmarks(
+      isBookmarked
+        ? bookmarks.filter((item) => item.id !== news.id)
+        : [news, ...bookmarks.filter((item) => item.id !== news.id)].slice(0, 25)
+    )
+  }
+
+  const shareArticle = async () => {
+    try {
+      await navigator.clipboard.writeText(news.url)
+    } catch {
+      window.open(news.url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   return (
     <div className="flex flex-col h-full bg-card border border-border rounded overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 bg-secondary border-b border-border">
         <span className="text-xs font-medium text-primary">ARTICLE</span>
         <div className="flex items-center gap-2">
-          <button className="p-1 hover:bg-muted rounded">
-            <Bookmark className="h-3.5 w-3.5 text-muted-foreground" />
+          <button type="button" onClick={toggleBookmark} className="p-1 hover:bg-muted rounded" title="Bookmark article">
+            <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
           </button>
-          <button className="p-1 hover:bg-muted rounded">
+          <button type="button" onClick={shareArticle} className="p-1 hover:bg-muted rounded" title="Copy article link">
             <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
           <a 

@@ -4,7 +4,11 @@ import { useMarketIndices } from '@/hooks/use-market-data'
 import { TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export function MarketTicker() {
+interface MarketTickerProps {
+  onSelectSymbol: (symbol: string) => void
+}
+
+export function MarketTicker({ onSelectSymbol }: MarketTickerProps) {
   const { indices, isLoading, refresh } = useMarketIndices()
 
   if (isLoading && indices.length === 0) {
@@ -34,7 +38,13 @@ export function MarketTicker() {
           const isNeutral = (index.change ?? 0) === 0
 
           return (
-            <div key={index.symbol} className="flex items-center gap-3 shrink-0">
+            <button
+              key={index.symbol}
+              type="button"
+              onClick={() => onSelectSymbol(index.displaySymbol)}
+              className="flex items-center gap-3 shrink-0 hover:bg-background/50 rounded px-2 py-1 transition-colors"
+              title={`Open ${index.symbol} details`}
+            >
               <div className="text-xs">
                 <span className="text-primary font-medium">{index.symbol}</span>
               </div>
@@ -59,7 +69,7 @@ export function MarketTicker() {
                   ({isPositive ? '+' : ''}{index.changePercent?.toFixed(2)}%)
                 </span>
               </div>
-            </div>
+            </button>
           )
         })}
       </div>

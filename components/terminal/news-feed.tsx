@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNews, NewsItem } from '@/hooks/use-market-data'
 import { cn } from '@/lib/utils'
 import { Newspaper, ExternalLink, Clock, RefreshCw, Loader2 } from 'lucide-react'
@@ -10,9 +10,10 @@ interface NewsFeedProps {
   onSelectNews: (news: NewsItem) => void
   selectedId?: string
   symbol?: string
+  onNewsLoaded?: (items: NewsItem[]) => void
 }
 
-export function NewsFeed({ onSelectNews, selectedId, symbol }: NewsFeedProps) {
+export function NewsFeed({ onSelectNews, selectedId, symbol, onNewsLoaded }: NewsFeedProps) {
   const [category, setCategory] = useState<string>('general')
   const { news, isLoading, refresh } = useNews(symbol ? undefined : category, symbol)
   
@@ -38,6 +39,10 @@ export function NewsFeed({ onSelectNews, selectedId, symbol }: NewsFeedProps) {
     if (diffDays < 7) return `${diffDays}d ago`
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
+
+  useEffect(() => {
+    onNewsLoaded?.(news)
+  }, [news, onNewsLoaded])
 
   return (
     <div className="flex flex-col h-full bg-card border border-border rounded overflow-hidden">

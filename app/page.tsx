@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { NewsItem } from '@/hooks/use-market-data'
+import { clearClientDatabase } from '@/lib/client-db'
+import { usePersistedState } from '@/hooks/use-persisted-state'
 import { TerminalHeader } from '@/components/terminal/header'
 import { MarketTicker } from '@/components/terminal/market-ticker'
 import { Watchlist } from '@/components/terminal/watchlist'
@@ -14,10 +16,12 @@ import { CommandBar } from '@/components/terminal/command-bar'
 import { StatusBar } from '@/components/terminal/status-bar'
 
 export default function TerminalPage() {
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('AAPL')
+  const { value: selectedSymbol, setValue: setSelectedSymbol } = usePersistedState<string>('selected-symbol', 'AAPL')
+  const { value: activePanel, setValue: setActivePanel } = usePersistedState<'chart' | 'news'>('active-panel', 'chart')
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null)
   const [commandBarOpen, setCommandBarOpen] = useState(false)
-  const [activePanel, setActivePanel] = useState<'chart' | 'news'>('chart')
+  const [watchlistFocusRequest, setWatchlistFocusRequest] = useState(0)
+  const [analysisFocusRequest, setAnalysisFocusRequest] = useState(0)
 
   // Keyboard shortcut for command bar
   useEffect(() => {
@@ -34,6 +38,7 @@ export default function TerminalPage() {
 
   const handleSelectStock = (symbol: string) => {
     setSelectedSymbol(symbol)
+    setSelectedNews(null)
     setActivePanel('chart')
   }
 
@@ -42,10 +47,32 @@ export default function TerminalPage() {
     setActivePanel('news')
   }
 
+  const handleNewsLoaded = (items: NewsItem[]) => {
+    setSelectedNews((current) => {
+      if (items.length === 0) return null
+      if (current && items.some((item) => item.id === current.id)) {
+        return current
+      }
+      return items[0]
+    })
+  }
+
+  const handleResetWorkspace = async () => {
+    await clearClientDatabase()
+    window.location.reload()
+  }
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
-      <TerminalHeader />
-      <MarketTicker />
+      <TerminalHeader
+        onOpenSearch={() => setCommandBarOpen(true)}
+        onShowMarkets={() => setActivePanel('chart')}
+        onShowNews={() => setActivePanel('news')}
+        onOpenWatchlist={() => setWatchlistFocusRequest((value) => value + 1)}
+        onShowAnalysis={() => setAnalysisFocusRequest((value) => value + 1)}
+        onResetWorkspace={handleResetWorkspace}
+      />
+      <MarketTicker onSelectSymbol={handleSelectStock} />
       
       {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
@@ -54,6 +81,7 @@ export default function TerminalPage() {
           <Watchlist 
             onSelectStock={handleSelectStock} 
             selectedSymbol={selectedSymbol} 
+            focusInputRequest={watchlistFocusRequest}
           />
         </aside>
         
@@ -92,6 +120,8 @@ export default function TerminalPage() {
               <NewsFeed 
                 onSelectNews={handleSelectNews} 
                 selectedId={selectedNews?.id} 
+                symbol={selectedSymbol}
+                onNewsLoaded={handleNewsLoaded}
               />
             </div>
           </div>
@@ -104,6 +134,8 @@ export default function TerminalPage() {
               <NewsFeed 
                 onSelectNews={handleSelectNews} 
                 selectedId={selectedNews?.id} 
+                symbol={selectedSymbol}
+                onNewsLoaded={handleNewsLoaded}
               />
             )}
           </div>
@@ -124,7 +156,11 @@ export default function TerminalPage() {
             )}
           </div>
           <div className="h-1/3">
-            <AIInsights symbol={selectedSymbol} news={selectedNews || undefined} />
+            <AIInsights
+              symbol={selectedSymbol}
+              news={selectedNews || undefined}
+              focusInputRequest={analysisFocusRequest}
+            />
           </div>
         </aside>
       </main>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStockQuote, NewsItem } from '@/hooks/use-market-data'
 import { cn } from '@/lib/utils'
 import { Bot, Sparkles, Send, RefreshCw, TrendingUp, Newspaper, BarChart3 } from 'lucide-react'
@@ -8,6 +8,7 @@ import { Bot, Sparkles, Send, RefreshCw, TrendingUp, Newspaper, BarChart3 } from
 interface AIInsightsProps {
   symbol?: string | null
   news?: NewsItem
+  focusInputRequest?: number
 }
 
 const quickPrompts = [
@@ -59,12 +60,17 @@ function renderFormattedText(text: string) {
   })
 }
 
-export function AIInsights({ symbol, news }: AIInsightsProps) {
+export function AIInsights({ symbol, news, focusInputRequest = 0 }: AIInsightsProps) {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const { quote } = useStockQuote(symbol || null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [focusInputRequest])
 
   const buildContext = () => {
     if (quote) {
@@ -232,6 +238,7 @@ export function AIInsights({ symbol, news }: AIInsightsProps) {
       <form onSubmit={handleSubmit} className="p-3 border-t border-border">
         <div className="flex items-center gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}

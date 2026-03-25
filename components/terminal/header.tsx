@@ -3,7 +3,23 @@
 import { useState, useEffect } from 'react'
 import { Activity, Bell, Search, Settings, Zap } from 'lucide-react'
 
-export function TerminalHeader() {
+interface TerminalHeaderProps {
+  onOpenSearch: () => void
+  onShowMarkets: () => void
+  onShowNews: () => void
+  onOpenWatchlist: () => void
+  onShowAnalysis: () => void
+  onResetWorkspace: () => void
+}
+
+export function TerminalHeader({
+  onOpenSearch,
+  onShowMarkets,
+  onShowNews,
+  onOpenWatchlist,
+  onShowAnalysis,
+  onResetWorkspace,
+}: TerminalHeaderProps) {
   const [mounted, setMounted] = useState(false)
   const [time, setTime] = useState(new Date())
   
@@ -21,27 +37,35 @@ export function TerminalHeader() {
           <span className="text-lg font-bold text-primary">TERMINAL PRO</span>
         </div>
         <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="px-2 py-1 bg-muted rounded">MARKETS</span>
-          <span className="px-2 py-1 hover:bg-muted rounded cursor-pointer">NEWS</span>
-          <span className="px-2 py-1 hover:bg-muted rounded cursor-pointer">WATCHLIST</span>
-          <span className="px-2 py-1 hover:bg-muted rounded cursor-pointer">ANALYSIS</span>
+          <button onClick={onShowMarkets} className="px-2 py-1 bg-muted rounded hover:bg-muted/80">MARKETS</button>
+          <button onClick={onShowNews} className="px-2 py-1 hover:bg-muted rounded cursor-pointer">NEWS</button>
+          <button onClick={onOpenWatchlist} className="px-2 py-1 hover:bg-muted rounded cursor-pointer">WATCHLIST</button>
+          <button onClick={onShowAnalysis} className="px-2 py-1 hover:bg-muted rounded cursor-pointer">ANALYSIS</button>
         </div>
       </div>
       
       <div className="flex items-center gap-4">
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-muted rounded text-xs">
+        <button
+          type="button"
+          onClick={onOpenSearch}
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-muted rounded text-xs hover:bg-muted/80 transition-colors"
+        >
           <Search className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-muted-foreground">Search ticker...</span>
           <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px] text-muted-foreground border border-border">⌘K</kbd>
-        </div>
+        </button>
         
         <div className="flex items-center gap-3 text-muted-foreground">
           <div className="flex items-center gap-1.5 text-xs">
             <Activity className="h-3.5 w-3.5 text-terminal-green" />
             <span className="text-terminal-green">LIVE</span>
           </div>
-          <Bell className="h-4 w-4 cursor-pointer hover:text-foreground" />
-          <Settings className="h-4 w-4 cursor-pointer hover:text-foreground" />
+          <button type="button" onClick={onShowNews} className="hover:text-foreground">
+            <Bell className="h-4 w-4 cursor-pointer" />
+          </button>
+          <button type="button" onClick={onResetWorkspace} className="hover:text-foreground" title="Reset saved workspace">
+            <Settings className="h-4 w-4 cursor-pointer" />
+          </button>
         </div>
         
         <div className="text-right text-xs" suppressHydrationWarning>

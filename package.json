@@ -12,6 +12,8 @@
   "dependencies": {
     "@ai-sdk/react": "^3.0.136",
     "@hookform/resolvers": "^3.9.1",
+    "@okta/okta-auth-js": "^7.8.1",
+    "@okta/okta-react": "^6.9.0",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",
     "@radix-ui/react-aspect-ratio": "1.1.8",
